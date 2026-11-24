@@ -4,6 +4,8 @@ Bài tập lớn môn **Lập trình mạng** (Network Programming) — Trườn
 
 Hệ thống client/server cho phép nhiều người dùng cùng tham gia các phòng đấu giá theo thời gian thực. Server và client được viết bằng **C/C++ trên Linux**, giao tiếp qua **TCP stream socket** bằng một **giao thức dạng văn bản (text-based) tự định nghĩa**.
 
+> **Tài liệu kỹ thuật chi tiết cho Dev / AI Agent:** Xem bản đồ tài liệu tại [`docs/README.md`](docs/README.md) (gồm [`docs/brief/`](docs/brief/00-project-brief.md), [`docs/specs/`](docs/specs/01-functional-spec.md), [`docs/plans/`](docs/plans/01-execution-plan.md)) và quy ước [`AGENTS.md`](AGENTS.md).
+
 ---
 
 ## Mục lục
@@ -354,11 +356,13 @@ Mỗi dòng gồm: thời gian, mức độ (`INFO`/`WARN`/`ERROR`), chủ thể
 ```
 .
 ├── README.md
+├── AGENTS.md
 ├── Makefile
-├── docs/                 # Slide bài giảng tham khảo
+├── docs/                 # Slide bài giảng (Chapter 1–7.pptx) + brief/, specs/, plans/
 ├── common/
 │   ├── protocol.h        # Mã lệnh, mã phản hồi, hằng số (MAX_LINE, BID_STEP, ...)
-│   └── stream.c/.h       # Bộ đệm nhận/gửi, tách dòng theo \r\n
+│   ├── stream.c/.h       # Bộ đệm nhận/gửi, tách dòng theo \r\n
+│   └── parse.c/.h        # Tách token (ngoặc kép), parse số an toàn, kiểm tra chuỗi
 ├── server/
 │   ├── main.c            # Khởi tạo socket, vòng lặp select()
 │   ├── session.c/.h      # Quản lý phiên, ánh xạ fd ↔ user
@@ -372,6 +376,7 @@ Mỗi dòng gồm: thời gian, mức độ (`INFO`/`WARN`/`ERROR`), chủ thể
 ├── client/
 │   ├── main.c            # Giao diện dòng lệnh, select() trên stdin + socket
 │   └── ui.c/.h           # Hiển thị menu, phản hồi và thông báo
+├── tests/                # Kịch bản nghiệm thu tự động (lib.sh, at_*.sh, unit/)
 ├── data/                 # Dữ liệu lưu trữ (tự tạo khi chạy)
 └── logs/                 # File log (tự tạo khi chạy)
 ```
