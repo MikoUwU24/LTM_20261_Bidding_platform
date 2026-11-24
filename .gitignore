@@ -1,0 +1,6 @@
+bin/
+data/
+logs/
+*.o
+*.tmp
+.superpowers/

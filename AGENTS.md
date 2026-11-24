@@ -1,6 +1,18 @@
 # AGENTS.md
 
-Hướng dẫn cho AI coding agent (Claude Code, Codex, Copilot, …) khi làm việc trong repo này. Đọc file này **trước** khi sửa code. Đặc tả đầy đủ nằm trong [README.md](README.md). Nếu README và code mâu thuẫn, coi **README là nguồn chuẩn** và báo lại cho người dùng.
+Hướng dẫn cho AI coding agent (Claude Code, Codex, Copilot, …) khi làm việc trong repo này. Đọc file này **trước** khi sửa code, sau đó đọc [docs/README.md](docs/README.md) để biết thứ tự đọc theo vai trò.
+
+## Hệ thống tài liệu (nguồn chuẩn)
+
+| Lớp | Đường dẫn | Dùng để |
+|-----|-----------|---------|
+| Brief | `docs/brief/` | Đề bài, 13 tiêu chí, glossary, ADR-01..10, **ranh giới kiến thức** (`02-knowledge-boundary.md`) |
+| Specs | `docs/specs/` | **Nguồn chuẩn**: `REQ-*`, giao thức (chuỗi phản hồi chính xác), struct + chữ ký hàm, định dạng file/log, client |
+| Plans | `docs/plans/` | Chặng việc, file mỗi agent được sửa, Definition of Done, kịch bản nghiệm thu `AT-*` |
+
+- Thứ tự ưu tiên khi lệch: `docs/specs/` > `docs/brief/` > `README.md` > code. Gặp lệch → **dừng và báo** người dùng, không tự chọn.
+- **Chỉ dùng kiến thức trong slide** `docs/Chapter 1–7.pptx`: API ngoài whitelist/ngoại lệ ở `docs/brief/02-knowledge-boundary.md` → dừng và hỏi.
+- Làm song song: một agent chỉ sửa file thuộc chặng của mình ([plans/01 §2](docs/plans/01-execution-plan.md)); mọi `*.h`, `Makefile`, `common/protocol.h`, `tests/lib.sh`, `docs/**` chỉ người điều phối sửa.
 
 ## Bối cảnh dự án
 
@@ -27,6 +39,7 @@ Build phải sạch với `-Wall -Wextra -Werror`. Trước khi báo hoàn thàn
 |-----------|-------------|
 | `common/protocol.h` | Tên lệnh, mã phản hồi, hằng số (`MAX_LINE`, `BID_STEP`, `AUCTION_IDLE_SEC`, `COUNTDOWN_INTERVAL_SEC`, …) |
 | `common/stream.c/.h` | Bộ đệm nhận/gửi, tách dòng theo `\r\n` — dùng chung cho server và client |
+| `common/parse.c/.h` | Tách token (ngoặc kép), parse số an toàn, kiểm tra username/password/chuỗi |
 | `server/main.c` | Khởi tạo socket, vòng lặp `select()`, tính timeout cho bộ đếm ngược |
 | `server/session.c` | Ánh xạ `fd` ↔ phiên (trạng thái, user, phòng) |
 | `server/account.c` | Đăng ký, đăng nhập, hash mật khẩu |
@@ -37,6 +50,7 @@ Build phải sạch với `-Wall -Wextra -Werror`. Trước khi báo hoàn thàn
 | `server/storage.c` | Đọc/ghi `data/*.txt` |
 | `server/logger.c` | Ghi `logs/server.log` |
 | `client/` | CLI client, `select()` trên `stdin` + socket |
+| `tests/` | `lib.sh` + `at_*.sh` (kịch bản `nc` theo `AT-*`), `unit/` (unit test C với `assert`) |
 
 `data/`, `logs/`, `bin/` và file `*.o` là sản phẩm lúc chạy/build — không commit (đưa vào `.gitignore`).
 
@@ -103,4 +117,4 @@ Thứ tự kiểm tra quyền trong `handler.c`: đăng nhập → ở trong ph�
 - Nhánh phát triển: `dev`; nhánh chính: `main`. Không commit thẳng lên `main`.
 - Commit nhỏ, mỗi commit một chức năng/tiêu chí; message dạng `feat(auction): ...`, `fix(stream): ...`, `docs: ...`.
 - Không commit `bin/`, `data/`, `logs/`, `*.o`.
-- Không sửa nội dung `docs/` (slide bài giảng gốc).
+- Không sửa các slide gốc `docs/Chapter *.pptx`. Tài liệu thiết kế trong `docs/brief|specs|plans` chỉ người điều phối sửa.
