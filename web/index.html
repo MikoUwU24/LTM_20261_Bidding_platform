@@ -1,0 +1,1026 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bidding Platform — TCP Socket Multi-Client Console (SoICT HUST)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    :root {
+      --weamis-navy: #0b2537;
+      --weamis-navy-hover: #163548;
+      --weamis-navy-light: #214358;
+      --weamis-gold: #e7bb7c;
+      --weamis-gold-hover: #d6a565;
+      --weamis-gold-subtle: #fbf5ec;
+      --weamis-muted: #52616b;
+      --weamis-paper: #f5f5f1;
+      --weamis-rule: #d3dadd;
+      --weamis-white: #ffffff;
+
+      --tag-red-bg: #fedbd5;    --tag-red-bd: #d76a58;    --tag-red-tx: #6b1f15;
+      --tag-orange-bg: #fedec5; --tag-orange-bd: #cc7724; --tag-orange-tx: #5c3003;
+      --tag-yellow-bg: #f4dc9d; --tag-yellow-bd: #c09910; --tag-yellow-tx: #4c3b04;
+      --tag-cyan-bg: #c2ecfe;   --tag-cyan-bd: #179dc5;   --tag-cyan-tx: #044457;
+      --tag-green-bg: #bae5bd;  --tag-green-bd: #4ca65a;  --tag-green-tx: #044b18;
+      --tag-blue-bg: #c3d9fe;   --tag-blue-bd: #5d8ee4;   --tag-blue-tx: #193a76;
+      --tag-gray-bg: #e5e8ea;   --tag-gray-bd: #9aa5ad;   --tag-gray-tx: #364149;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 13px;
+      line-height: 1.45;
+      color: var(--weamis-navy);
+      background-color: var(--weamis-paper);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .tabular-nums { font-variant-numeric: tabular-nums; }
+    .mono { font-family: 'JetBrains Mono', monospace; }
+
+    /* Top Header */
+    .top-header {
+      height: 44px;
+      background: var(--weamis-navy);
+      color: var(--weamis-white);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 14px;
+      border-bottom: 1px solid #071926;
+      flex-shrink: 0;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-weight: 700;
+      font-size: 14px;
+      letter-spacing: -0.01em;
+    }
+    .brand-mark {
+      width: 24px;
+      height: 24px;
+      border-radius: 4px;
+      background: var(--weamis-gold);
+      color: var(--weamis-navy);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 12px;
+    }
+    .header-meta {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* ControlPanel 2-Tier */
+    .control-panel {
+      background: var(--weamis-white);
+      border-bottom: 1px solid var(--weamis-rule);
+      padding: 6px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    .cp-left, .cp-right {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    /* Buttons & Inputs (30px height, 4px radius) */
+    .btn {
+      height: 30px;
+      padding: 0 10px;
+      border-radius: 4px;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 600;
+      border: 1px solid var(--weamis-rule);
+      background: var(--weamis-white);
+      color: var(--weamis-navy);
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      cursor: pointer;
+      white-space: nowrap;
+      flex-shrink: 0;
+      transition: background 0.12s, border-color 0.12s;
+    }
+    .btn:hover { background: #eef1f3; }
+    .btn:active { transform: translateY(0.5px); }
+    .btn-primary {
+      background: var(--weamis-navy);
+      color: var(--weamis-white);
+      border-color: var(--weamis-navy);
+    }
+    .btn-primary:hover { background: var(--weamis-navy-hover); }
+    .btn-gold {
+      background: var(--weamis-gold);
+      color: var(--weamis-navy);
+      border-color: #c89855;
+    }
+    .btn-gold:hover { background: var(--weamis-gold-hover); }
+    .btn-danger {
+      background: var(--tag-red-bg);
+      color: var(--tag-red-tx);
+      border-color: var(--tag-red-bd);
+    }
+    .btn-danger:hover { background: #fcc7be; }
+    .btn-sm {
+      height: 24px;
+      padding: 0 7px;
+      font-size: 11px;
+      border-radius: 3px;
+    }
+
+    .input {
+      height: 30px;
+      padding: 0 8px;
+      border-radius: 4px;
+      border: 1px solid var(--weamis-rule);
+      background: var(--weamis-white);
+      color: var(--weamis-navy);
+      font-family: inherit;
+      font-size: 12px;
+      outline: none;
+    }
+    .input:focus {
+      border-color: var(--weamis-navy);
+      box-shadow: 0 0 0 2px rgba(231, 187, 124, 0.35);
+    }
+
+    /* Badges (20px height, 3px radius, nowrap) */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      white-space: nowrap;
+      height: 20px;
+      padding: 0 6px;
+      border-radius: 3px;
+      font-size: 11px;
+      font-weight: 600;
+      line-height: 1;
+      flex-shrink: 0;
+      border: 1px solid transparent;
+    }
+    .badge-green  { background: var(--tag-green-bg);  border-color: var(--tag-green-bd);  color: var(--tag-green-tx); }
+    .badge-red    { background: var(--tag-red-bg);    border-color: var(--tag-red-bd);    color: var(--tag-red-tx); }
+    .badge-orange { background: var(--tag-orange-bg); border-color: var(--tag-orange-bd); color: var(--tag-orange-tx); }
+    .badge-yellow { background: var(--tag-yellow-bg); border-color: var(--tag-yellow-bd); color: var(--tag-yellow-tx); }
+    .badge-cyan   { background: var(--tag-cyan-bg);   border-color: var(--tag-cyan-bd);   color: var(--tag-cyan-tx); }
+    .badge-blue   { background: var(--tag-blue-bg);   border-color: var(--tag-blue-bd);   color: var(--tag-blue-tx); }
+    .badge-gray   { background: var(--tag-gray-bg);   border-color: var(--tag-gray-bd);   color: var(--tag-gray-tx); }
+
+    /* Main Workspace Grid */
+    .workspace {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 370px;
+      gap: 10px;
+      padding: 10px 14px;
+      overflow: hidden;
+    }
+
+    /* Client Column Sheet */
+    .client-sheet {
+      background: var(--weamis-white);
+      border: 1px solid var(--weamis-rule);
+      border-radius: 6px;
+      box-shadow: 0 1px 2px rgba(11, 37, 55, 0.04);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .sheet-header {
+      padding: 8px 10px;
+      background: #f9faf9;
+      border-bottom: 1px solid var(--weamis-rule);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+    }
+    .sheet-title {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-weight: 700;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Auction Live Banner inside Client Sheet */
+    .auction-banner {
+      padding: 8px 10px;
+      background: var(--weamis-gold-subtle);
+      border-bottom: 1px solid #e6d3b3;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .auction-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+    }
+    .auction-price {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--weamis-navy);
+    }
+
+    /* Action Groups inside Client Sheet */
+    .action-body {
+      padding: 8px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      overflow-y: auto;
+      border-bottom: 1px solid var(--weamis-rule);
+      max-height: 54%;
+    }
+    .group-box {
+      border: 1px solid var(--weamis-rule);
+      border-radius: 4px;
+      padding: 6px 8px;
+      background: #fcfcfb;
+    }
+    .group-label {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--weamis-muted);
+      margin-bottom: 5px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .form-row {
+      display: flex;
+      gap: 5px;
+      margin-bottom: 5px;
+      align-items: center;
+    }
+    .form-row:last-child { margin-bottom: 0; }
+    .form-row .input { flex: 1; min-width: 0; }
+
+    /* Mini Tables inside Client Sheet */
+    .mini-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11px;
+      margin-top: 4px;
+    }
+    .mini-table th, .mini-table td {
+      border: 1px solid var(--weamis-rule);
+      padding: 3px 5px;
+      text-align: left;
+    }
+    .mini-table th {
+      background: #f1f3f4;
+      color: var(--weamis-muted);
+      font-weight: 600;
+    }
+
+    /* TCP Stream Console per Client */
+    .stream-console {
+      flex: 1;
+      background: #0d1f2d;
+      color: #dbe4eb;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      padding: 7px 9px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .log-line {
+      display: flex;
+      gap: 6px;
+      align-items: baseline;
+      word-break: break-all;
+    }
+    .log-ts { color: #6e8494; flex-shrink: 0; }
+    .log-tx { color: #e7bb7c; }
+    .log-rx-ok { color: #7ee2a8; }
+    .log-rx-err { color: #ff8b7b; }
+    .log-notify { color: #68d5ff; font-weight: 600; }
+    .log-sys { color: #9aaab7; font-style: italic; }
+
+    .raw-bar {
+      padding: 6px 8px;
+      background: #f3f5f6;
+      border-top: 1px solid var(--weamis-rule);
+      display: flex;
+      gap: 5px;
+    }
+
+    /* Right Inspector Panel (Storage & Server Log) */
+    .inspector-panel {
+      background: var(--weamis-white);
+      border: 1px solid var(--weamis-rule);
+      border-radius: 6px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .inspector-section {
+      padding: 7px 10px;
+      border-bottom: 1px solid var(--weamis-rule);
+    }
+    .code-box {
+      background: #f7f8f8;
+      border: 1px solid var(--weamis-rule);
+      border-radius: 4px;
+      padding: 5px 7px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10.5px;
+      max-height: 95px;
+      overflow-y: auto;
+      white-space: pre;
+      color: var(--weamis-navy);
+    }
+    .server-log-box {
+      flex: 1;
+      background: #091722;
+      color: #c7d6e2;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10.5px;
+      padding: 7px 9px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+    }
+    .icon-sm { width: 13px; height: 13px; stroke-width: 1.75; flex-shrink: 0; }
+  </style>
+</head>
+<body>
+
+  <!-- TOP HEADER -->
+  <header class="top-header">
+    <div class="brand">
+      <span class="brand-mark">BP</span>
+      <span>Bidding Platform — TCP Socket Multiplexing Console</span>
+      <span class="badge badge-blue">C11 select() Server</span>
+      <span class="badge badge-yellow tabular-nums" id="tcpTargetBadge">TCP 127.0.0.1:5500</span>
+    </div>
+    <div class="header-meta">
+      <span class="badge badge-green">13/13 Tiêu chí (20/20đ)</span>
+      <span class="badge badge-cyan">Framing: \r\n</span>
+      <span class="badge badge-orange tabular-nums">Bước giá: +10.000đ</span>
+    </div>
+  </header>
+
+  <!-- CONTROLPANEL 2-TIER -->
+  <section class="control-panel">
+    <div class="cp-left">
+      <button class="btn btn-gold" onclick="runAutoE2EDemo()">
+        <i data-lucide="play" class="icon-sm"></i>
+        <span>Chạy Kịch bản E2E Tự động (Alice + Bob + Carol)</span>
+      </button>
+      <button class="btn" onclick="refreshAllLists()">
+        <i data-lucide="refresh-cw" class="icon-sm"></i>
+        <span>Đồng bộ LIST_ROOMS &amp; LIST_ITEMS</span>
+      </button>
+    </div>
+    <div class="cp-right">
+      <button class="btn" onclick="testFragmentedStream('alice')" title="Tiêu chí #1: Gửi 1 lệnh cắt làm 2 mảnh cách nhau 250ms">
+        <i data-lucide="Scissors" class="icon-sm"></i>
+        <span>Test Nhận Thiếu (Fragmented TCP)</span>
+      </button>
+      <button class="btn" onclick="testStickyStream('bob')" title="Tiêu chí #1: Gửi 2 lệnh dính liền trong 1 lần send()">
+        <i data-lucide="layers" class="icon-sm"></i>
+        <span>Test Dính Gói (Sticky TCP)</span>
+      </button>
+      <button class="btn btn-danger" onclick="testOversizeLine('carol')" title="Tiêu chí #1: Gửi dòng > 4096 byte -> 400 Line too long">
+        <i data-lucide="shield-alert" class="icon-sm"></i>
+        <span>Test Vượt MAX_LINE (&gt;4096B)</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- 3 PARALLEL TCP CLIENTS + RIGHT STORAGE/LOG INSPECTOR -->
+  <main class="workspace">
+    <div id="client-alice" class="client-sheet"></div>
+    <div id="client-bob" class="client-sheet"></div>
+    <div id="client-carol" class="client-sheet"></div>
+
+    <!-- RIGHT INSPECTOR -->
+    <aside class="inspector-panel">
+      <div class="sheet-header">
+        <div class="sheet-title">
+          <i data-lucide="database" class="icon-sm"></i>
+          <span>Server Storage &amp; Activity Log</span>
+        </div>
+        <button class="btn btn-sm" onclick="pollServerFiles()">
+          <i data-lucide="rotate-cw" class="icon-sm"></i>
+          <span>Làm mới</span>
+        </button>
+      </div>
+
+      <div class="inspector-section">
+        <div class="group-label">
+          <span>data/accounts.txt (Salt + FNV-1a Hash)</span>
+          <span class="badge badge-gray">Tiêu chí #3</span>
+        </div>
+        <div id="box-accounts" class="code-box tabular-nums">(trống)</div>
+      </div>
+
+      <div class="inspector-section">
+        <div class="group-label">
+          <span>data/rooms.txt</span>
+          <span class="badge badge-gray">Tiêu chí #6,#7</span>
+        </div>
+        <div id="box-rooms" class="code-box tabular-nums">(trống)</div>
+      </div>
+
+      <div class="inspector-section">
+        <div class="group-label">
+          <span>data/items.txt (FIFO Queue &amp; Status)</span>
+          <span class="badge badge-gray">Tiêu chí #8..12</span>
+        </div>
+        <div id="box-items" class="code-box tabular-nums">(trống)</div>
+      </div>
+
+      <div class="sheet-header" style="border-top: 1px solid var(--weamis-rule);">
+        <div class="sheet-title">
+          <i data-lucide="file-text" class="icon-sm"></i>
+          <span>logs/server.log (Real-time)</span>
+        </div>
+        <span class="badge badge-green">Tiêu chí #13</span>
+      </div>
+      <div id="box-server-log" class="server-log-box tabular-nums">Đang tải logs/server.log...</div>
+    </aside>
+  </main>
+
+  <script>
+    const CLIENTS = [
+      { id: 'alice', label: 'Client 1 — ALICE', defaultUser: 'alice', defaultPass: 'pass123', roleHint: 'Chủ phòng (Owner)', defaultRoom: 'Phien Do Co' },
+      { id: 'bob',   label: 'Client 2 — BOB',   defaultUser: 'bob',   defaultPass: 'pass123', roleHint: 'Người đấu giá 1',  defaultRoom: 'Phien Tranh' },
+      { id: 'carol', label: 'Client 3 — CAROL', defaultUser: 'carol', defaultPass: 'pass123', roleHint: 'Người đấu giá 2',  defaultRoom: 'Phien Dong Ho' }
+    ];
+
+    const state = {};
+    CLIENTS.forEach(c => {
+      state[c.id] = {
+        connected: true,
+        loggedInUser: null,
+        roomId: null,
+        roomName: null,
+        auctionItem: null, // { id, name, desc, start, buyNow, current, winner, countdown }
+        roomsList: [],
+        itemsList: []
+      };
+    });
+
+    function fmtVnd(n) {
+      const num = Number(n) || 0;
+      return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.') + ' đ';
+    }
+
+    function tokenizeProtocol(str) {
+      const tokens = [];
+      let i = 0;
+      while (i < str.length) {
+        while (i < str.length && str[i] === ' ') i++;
+        if (i >= str.length) break;
+        if (str[i] === '"') {
+          i++;
+          let start = i;
+          while (i < str.length && str[i] !== '"') i++;
+          tokens.push(str.slice(start, i));
+          i++;
+        } else {
+          let start = i;
+          while (i < str.length && str[i] !== ' ') i++;
+          tokens.push(str.slice(start, i));
+        }
+      }
+      return tokens;
+    }
+
+    function splitRecords(str) {
+      const res = [];
+      let inQuote = false, start = 0;
+      for (let i = 0; i < str.length; i++) {
+        if (str[i] === '"') inQuote = !inQuote;
+        else if (!inQuote && str[i] === ';' && str[i + 1] === ' ') {
+          res.push(str.slice(start, i));
+          i++;
+          start = i + 1;
+        }
+      }
+      if (start < str.length) res.push(str.slice(start));
+      return res;
+    }
+
+    function buildClientColumn(c) {
+      const el = document.getElementById(`client-${c.id}`);
+      el.innerHTML = `
+        <div class="sheet-header">
+          <div class="sheet-title">
+            <i data-lucide="terminal" class="icon-sm"></i>
+            <span>${c.label}</span>
+            <span class="badge badge-gray" id="state-badge-${c.id}">CONNECTED</span>
+          </div>
+          <div style="display:flex; gap:4px;">
+            <button class="btn btn-sm" onclick="reconnectClient('${c.id}')" title="Kết nối lại socket TCP">
+              <i data-lucide="plug" class="icon-sm"></i>
+              <span>Kết nối</span>
+            </button>
+            <button class="btn btn-sm btn-danger" onclick="disconnectClient('${c.id}')" title="Đóng đột ngột socket TCP (test rớt mạng)">
+              <i data-lucide="plug-zap" class="icon-sm"></i>
+              <span>Ngắt</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="auction-banner" id="banner-${c.id}">
+          <div class="auction-top">
+            <span class="badge badge-yellow" id="room-pill-${c.id}">Chưa vào phòng</span>
+            <span class="badge badge-gray tabular-nums" id="cd-pill-${c.id}">Bộ đếm: chờ</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:baseline;">
+            <div style="font-weight:600; font-size:12px;" id="auc-title-${c.id}">Chưa có vật phẩm đang đấu giá</div>
+            <div class="auction-price tabular-nums" id="auc-price-${c.id}">—</div>
+          </div>
+          <div style="font-size:11px; color:var(--weamis-muted);" class="tabular-nums" id="auc-sub-${c.id}">
+            Vào phòng có vật phẩm ON_AUCTION để tố giá hoặc mua ngay
+          </div>
+        </div>
+
+        <div class="action-body">
+          <!-- 1. TÀI KHOẢN & PHIÊN -->
+          <div class="group-box">
+            <div class="group-label">
+              <span>1. Tài khoản &amp; Phiên (REGISTER / LOGIN / LOGOUT)</span>
+              <span>${c.roleHint}</span>
+            </div>
+            <div class="form-row">
+              <input class="input" id="user-${c.id}" value="${c.defaultUser}" placeholder="username" />
+              <input class="input" id="pass-${c.id}" value="${c.defaultPass}" placeholder="password" />
+            </div>
+            <div class="form-row">
+              <button class="btn btn-sm" onclick="doRegister('${c.id}')">REGISTER</button>
+              <button class="btn btn-sm btn-primary" onclick="doLogin('${c.id}')">LOGIN</button>
+              <button class="btn btn-sm" onclick="sendCmd('${c.id}', 'LOGOUT')">LOGOUT</button>
+            </div>
+          </div>
+
+          <!-- 2. PHÒNG ĐẤU GIÁ -->
+          <div class="group-box">
+            <div class="group-label">
+              <span>2. Phòng đấu giá (CREATE / LIST / JOIN / LEAVE)</span>
+              <button class="btn btn-sm" onclick="sendCmd('${c.id}', 'LIST_ROOMS')">LIST_ROOMS</button>
+            </div>
+            <div class="form-row">
+              <input class="input" id="rname-${c.id}" value="${c.defaultRoom}" placeholder="Tên phòng" />
+              <button class="btn btn-sm btn-gold" onclick="doCreateRoom('${c.id}')">CREATE_ROOM</button>
+            </div>
+            <div class="form-row">
+              <input class="input tabular-nums" id="jid-${c.id}" value="1" placeholder="room_id" style="max-width:75px;" />
+              <button class="btn btn-sm btn-primary" onclick="doJoinRoom('${c.id}')">JOIN_ROOM</button>
+              <button class="btn btn-sm" onclick="sendCmd('${c.id}', 'LEAVE_ROOM')">LEAVE_ROOM</button>
+            </div>
+            <div id="rooms-table-${c.id}"></div>
+          </div>
+
+          <!-- 3. VẬT PHẨM (CHỦ PHÒNG) -->
+          <div class="group-box">
+            <div class="group-label">
+              <span>3. Vật phẩm &amp; Hàng đợi FIFO (ADD / REMOVE / LIST)</span>
+              <button class="btn btn-sm" onclick="sendCmd('${c.id}', 'LIST_ITEMS')">LIST_ITEMS</button>
+            </div>
+            <div class="form-row">
+              <input class="input" id="iname-${c.id}" value="Binh gom Bat Trang" placeholder="Tên vật phẩm" />
+              <input class="input" id="idesc-${c.id}" value="The ky 19" placeholder="Mô tả" />
+            </div>
+            <div class="form-row">
+              <input class="input tabular-nums" id="istart-${c.id}" value="500000" placeholder="Giá khởi điểm" />
+              <input class="input tabular-nums" id="ibuy-${c.id}" value="2000000" placeholder="Giá mua ngay" />
+              <button class="btn btn-sm btn-gold" onclick="doAddItem('${c.id}')">ADD_ITEM</button>
+            </div>
+            <div class="form-row">
+              <input class="input tabular-nums" id="remid-${c.id}" value="2" placeholder="item_id" style="max-width:75px;" />
+              <button class="btn btn-sm btn-danger" onclick="doRemoveItem('${c.id}')">REMOVE_ITEM (Pending)</button>
+            </div>
+            <div id="items-table-${c.id}"></div>
+          </div>
+
+          <!-- 4. ĐẤU GIÁ & MUA NGAY -->
+          <div class="group-box">
+            <div class="group-label">
+              <span>4. Tố giá (+10.000đ) &amp; Mua trực tiếp (BID / BUY_NOW)</span>
+            </div>
+            <div class="form-row">
+              <input class="input tabular-nums" id="bid-item-${c.id}" value="1" placeholder="item_id" style="max-width:65px;" />
+              <input class="input tabular-nums" id="bid-price-${c.id}" value="550000" placeholder="Giá đặt (đồng)" />
+              <button class="btn btn-sm" onclick="bumpBid('${c.id}', 10000)" title="Cộng thêm 10.000đ vào giá hiện tại">+10k</button>
+              <button class="btn btn-sm btn-primary" onclick="doBid('${c.id}')">BID</button>
+              <button class="btn btn-sm btn-gold" onclick="doBuyNow('${c.id}')">BUY_NOW</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- TCP STREAM LOG -->
+        <div class="stream-console tabular-nums" id="console-${c.id}"></div>
+
+        <!-- RAW COMMAND BAR -->
+        <div class="raw-bar">
+          <input class="input mono" id="raw-${c.id}" placeholder="Gõ lệnh TCP thô (vd: LIST_ROOMS)..." style="flex:1;" onkeydown="if(event.key==='Enter') doSendRawInput('${c.id}')" />
+          <button class="btn btn-sm btn-primary" onclick="doSendRawInput('${c.id}')">Gửi \\r\\n</button>
+        </div>
+      `;
+    }
+
+    function updateClientHeaderUI(cid) {
+      const st = state[cid];
+      const badge = document.getElementById(`state-badge-${cid}`);
+      const roomPill = document.getElementById(`room-pill-${cid}`);
+      const cdPill = document.getElementById(`cd-pill-${cid}`);
+      const aucTitle = document.getElementById(`auc-title-${cid}`);
+      const aucPrice = document.getElementById(`auc-price-${cid}`);
+      const aucSub = document.getElementById(`auc-sub-${cid}`);
+
+      if (!st.connected) {
+        badge.className = 'badge badge-red';
+        badge.textContent = 'DISCONNECTED';
+      } else if (st.roomId) {
+        badge.className = 'badge badge-green';
+        badge.textContent = `${st.loggedInUser || cid} @ ROOM #${st.roomId}`;
+      } else if (st.loggedInUser) {
+        badge.className = 'badge badge-cyan';
+        badge.textContent = `AUTH (${st.loggedInUser})`;
+      } else {
+        badge.className = 'badge badge-gray';
+        badge.textContent = 'CONNECTED';
+      }
+
+      roomPill.textContent = st.roomId ? `Phòng #${st.roomId}: ${st.roomName || ''}` : 'Ngoài phòng';
+
+      const it = st.auctionItem;
+      if (it) {
+        aucTitle.textContent = `#${it.id} ${it.name} (${it.desc || 'không mô tả'})`;
+        aucPrice.textContent = fmtVnd(it.current);
+        aucSub.textContent = `Khởi điểm: ${fmtVnd(it.start)} | Mua ngay: ${fmtVnd(it.buyNow)} | Dẫn đầu: ${it.winner || 'chưa có'}`;
+        if (it.countdown > 0) {
+          cdPill.className = 'badge badge-red tabular-nums';
+          cdPill.textContent = `COUNTDOWN ${it.countdown}/3`;
+        } else {
+          cdPill.className = 'badge badge-green tabular-nums';
+          cdPill.textContent = 'ON_AUCTION';
+        }
+        document.getElementById(`bid-item-${cid}`).value = it.id;
+        document.getElementById(`bid-price-${cid}`).value = Number(it.current) + 10000;
+      } else {
+        aucTitle.textContent = 'Không có vật phẩm đang đấu giá';
+        aucPrice.textContent = '—';
+        aucSub.textContent = 'Chủ phòng dùng ADD_ITEM để đưa vật phẩm lên sàn';
+        cdPill.className = 'badge badge-gray tabular-nums';
+        cdPill.textContent = 'Chờ vật phẩm';
+      }
+    }
+
+    function renderRoomsTable(cid) {
+      const box = document.getElementById(`rooms-table-${cid}`);
+      const rows = state[cid].roomsList;
+      if (!rows.length) { box.innerHTML = ''; return; }
+      let html = `<table class="mini-table tabular-nums"><thead><tr><th>ID</th><th>Chủ</th><th>Tên</th><th>Người</th><th>Đang đấu</th><th>Chờ</th><th></th></tr></thead><tbody>`;
+      rows.forEach(r => {
+        html += `<tr>
+          <td>#${r.id}</td>
+          <td>${r.owner}</td>
+          <td>${r.name}</td>
+          <td>${r.members}</td>
+          <td>${r.auction}</td>
+          <td>${r.pending}</td>
+          <td><button class="btn btn-sm" onclick="sendCmd('${cid}', 'JOIN_ROOM ${r.id}')">Vào</button></td>
+        </tr>`;
+      });
+      html += `</tbody></table>`;
+      box.innerHTML = html;
+    }
+
+    function renderItemsTable(cid) {
+      const box = document.getElementById(`items-table-${cid}`);
+      const rows = state[cid].itemsList;
+      if (!rows.length) { box.innerHTML = ''; return; }
+      let html = `<table class="mini-table tabular-nums"><thead><tr><th>ID</th><th>TT</th><th>Tên</th><th>Hiện tại</th><th>Mua ngay</th><th>Winner</th></tr></thead><tbody>`;
+      rows.forEach(it => {
+        const cls = it.status === 'ON_AUCTION' ? 'badge-green' : 'badge-gray';
+        html += `<tr>
+          <td>#${it.id}</td>
+          <td><span class="badge ${cls}">${it.status}</span></td>
+          <td>${it.name}</td>
+          <td>${fmtVnd(it.current)}</td>
+          <td>${fmtVnd(it.buyNow)}</td>
+          <td>${it.winner}</td>
+        </tr>`;
+      });
+      html += `</tbody></table>`;
+      box.innerHTML = html;
+    }
+
+    function handleServerEvent(cid, ev) {
+      const st = state[cid];
+      const text = ev.text || '';
+
+      if (ev.kind === 'SYS') {
+        if (text.includes('Disconnected') || text.includes('closed')) {
+          st.connected = false;
+          st.loggedInUser = null;
+          st.roomId = null;
+          st.auctionItem = null;
+        } else if (text.includes('Connected')) {
+          st.connected = true;
+        }
+      } else if (ev.kind === 'TX') {
+        const t = tokenizeProtocol(text);
+        if (t[0] === 'LOGIN' && t[1]) st._pendingUser = t[1];
+        if (t[0] === 'CREATE_ROOM' && t[1]) st._pendingRoomName = t[1];
+      } else if (ev.kind === 'RX') {
+        if (text === '200 Login successful') {
+          st.loggedInUser = st._pendingUser || cid;
+        } else if (text === '200 Logged out') {
+          st.loggedInUser = null;
+          st.roomId = null;
+          st.roomName = null;
+          st.auctionItem = null;
+        } else if (text.startsWith('201 Room created ')) {
+          const rid = text.replace('201 Room created ', '').trim();
+          st.roomId = rid;
+          st.roomName = st._pendingRoomName || `Room #${rid}`;
+          st.auctionItem = null;
+        } else if (text.startsWith('200 Joined room ')) {
+          const tok = tokenizeProtocol(text);
+          st.roomId = tok[3];
+          st.roomName = tok[4] || '';
+          st.auctionItem = null;
+        } else if (text.startsWith('200 Left room ')) {
+          st.roomId = null;
+          st.roomName = null;
+          st.auctionItem = null;
+        } else if (text.startsWith('200 ROOMS ')) {
+          const recs = splitRecords(text.slice(4));
+          st.roomsList = recs.slice(1).map(r => {
+            const t = tokenizeProtocol(r);
+            return { id: t[0], owner: t[1], name: t[2], members: t[3], auction: t[4], pending: t[5] };
+          });
+          renderRoomsTable(cid);
+        } else if (text.startsWith('200 ITEMS ')) {
+          const recs = splitRecords(text.slice(4));
+          st.itemsList = recs.slice(1).map(r => {
+            const t = tokenizeProtocol(r);
+            return { id: t[0], status: t[1], name: t[2], desc: t[3], start: t[4], buyNow: t[5], current: t[6], winner: t[7] };
+          });
+          renderItemsTable(cid);
+        }
+      } else if (ev.kind === 'NOTIFY') {
+        const tok = tokenizeProtocol(text);
+        const evt = tok[1];
+        if (evt === 'AUCTION_START') {
+          st.auctionItem = {
+            id: tok[2], name: tok[3], desc: tok[4],
+            start: Number(tok[5]), buyNow: Number(tok[6]),
+            current: Number(tok[5]), winner: null, countdown: 0
+          };
+        } else if (evt === 'NEW_BID' && st.auctionItem && String(st.auctionItem.id) === String(tok[2])) {
+          st.auctionItem.winner = tok[3];
+          st.auctionItem.current = Number(tok[4]);
+          st.auctionItem.countdown = 0;
+        } else if (evt === 'COUNTDOWN' && st.auctionItem && String(st.auctionItem.id) === String(tok[2])) {
+          st.auctionItem.countdown = Number(tok[3]);
+          st.auctionItem.current = Number(tok[4]);
+        } else if ((evt === 'SOLD' || evt === 'UNSOLD') && st.auctionItem && String(st.auctionItem.id) === String(tok[2])) {
+          st.auctionItem = null;
+        }
+      }
+
+      appendConsoleLine(cid, ev);
+      updateClientHeaderUI(cid);
+      pollServerFiles();
+    }
+
+    function appendConsoleLine(cid, ev) {
+      const box = document.getElementById(`console-${cid}`);
+      const row = document.createElement('div');
+      row.className = 'log-line';
+      let cls = 'log-sys', prefix = '•';
+      if (ev.kind === 'TX' || ev.kind === 'TX_RAW') { cls = 'log-tx'; prefix = 'C→S'; }
+      else if (ev.kind === 'NOTIFY') { cls = 'log-notify'; prefix = 'S⚡C'; }
+      else if (ev.kind === 'RX') {
+        cls = (ev.text.startsWith('2')) ? 'log-rx-ok' : 'log-rx-err';
+        prefix = 'S→C';
+      }
+      row.innerHTML = `<span class="log-ts">${ev.ts}</span><span class="${cls}">${prefix} ${escapeHtml(ev.text)}</span>`;
+      box.appendChild(row);
+      box.scrollTop = box.scrollHeight;
+    }
+
+    function escapeHtml(s) {
+      return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    async function sendCmd(cid, command) {
+      await fetch('/api/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ client: cid, command })
+      });
+    }
+
+    async function reconnectClient(cid) {
+      await fetch('/api/reconnect', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ client: cid })
+      });
+    }
+
+    async function disconnectClient(cid) {
+      await fetch('/api/disconnect', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ client: cid })
+      });
+    }
+
+    function doRegister(cid) {
+      const u = document.getElementById(`user-${cid}`).value.trim();
+      const p = document.getElementById(`pass-${cid}`).value.trim();
+      sendCmd(cid, `REGISTER ${u} ${p}`);
+    }
+    function doLogin(cid) {
+      const u = document.getElementById(`user-${cid}`).value.trim();
+      const p = document.getElementById(`pass-${cid}`).value.trim();
+      sendCmd(cid, `LOGIN ${u} ${p}`);
+    }
+    function doCreateRoom(cid) {
+      const name = document.getElementById(`rname-${cid}`).value;
+      sendCmd(cid, `CREATE_ROOM "${name}"`);
+    }
+    function doJoinRoom(cid) {
+      const rid = document.getElementById(`jid-${cid}`).value.trim();
+      sendCmd(cid, `JOIN_ROOM ${rid}`);
+    }
+    function doAddItem(cid) {
+      const name = document.getElementById(`iname-${cid}`).value;
+      const desc = document.getElementById(`idesc-${cid}`).value;
+      const st = document.getElementById(`istart-${cid}`).value.trim();
+      const bn = document.getElementById(`ibuy-${cid}`).value.trim();
+      sendCmd(cid, `ADD_ITEM "${name}" "${desc}" ${st} ${bn}`);
+    }
+    function doRemoveItem(cid) {
+      const id = document.getElementById(`remid-${cid}`).value.trim();
+      sendCmd(cid, `REMOVE_ITEM ${id}`);
+    }
+    function bumpBid(cid, step) {
+      const inp = document.getElementById(`bid-price-${cid}`);
+      const base = state[cid].auctionItem ? Number(state[cid].auctionItem.current) : (Number(inp.value) || 500000);
+      inp.value = base + step;
+    }
+    function doBid(cid) {
+      const id = document.getElementById(`bid-item-${cid}`).value.trim();
+      const pr = document.getElementById(`bid-price-${cid}`).value.trim();
+      sendCmd(cid, `BID ${id} ${pr}`);
+    }
+    function doBuyNow(cid) {
+      const id = document.getElementById(`bid-item-${cid}`).value.trim();
+      sendCmd(cid, `BUY_NOW ${id}`);
+    }
+    function doSendRawInput(cid) {
+      const inp = document.getElementById(`raw-${cid}`);
+      if (!inp.value.trim()) return;
+      sendCmd(cid, inp.value);
+      inp.value = '';
+    }
+
+    /* TCP Stream Framing Tests (Criterion #1) */
+    async function testFragmentedStream(cid) {
+      await fetch('/api/send_raw', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ client: cid, chunks: ['LIST_', 'ROOMS\r\n'], delay_ms: 250 })
+      });
+    }
+    async function testStickyStream(cid) {
+      await fetch('/api/send_raw', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ client: cid, chunks: ['LIST_ROOMS\r\nLIST_ITEMS\r\n'], delay_ms: 0 })
+      });
+    }
+    async function testOversizeLine(cid) {
+      const huge = 'A'.repeat(4200) + '\r\n';
+      await fetch('/api/send_raw', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ client: cid, chunks: [huge], delay_ms: 0 })
+      });
+    }
+
+    function refreshAllLists() {
+      CLIENTS.forEach(c => {
+        if (state[c.id].loggedInUser) {
+          sendCmd(c.id, 'LIST_ROOMS');
+          if (state[c.id].roomId) sendCmd(c.id, 'LIST_ITEMS');
+        }
+      });
+    }
+
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+    async function runAutoE2EDemo() {
+      for (const c of CLIENTS) {
+        if (!state[c.id].connected) await reconnectClient(c.id);
+      }
+      await sleep(150);
+      for (const c of CLIENTS) {
+        await sendCmd(c.id, `REGISTER ${c.defaultUser} ${c.defaultPass}`);
+        await sleep(120);
+        await sendCmd(c.id, `LOGIN ${c.defaultUser} ${c.defaultPass}`);
+        await sleep(120);
+      }
+      await sendCmd('alice', 'CREATE_ROOM "Phien Dau Gia Do Co"');
+      await sleep(200);
+      const rid = state.alice.roomId || 1;
+      document.getElementById('jid-bob').value = rid;
+      document.getElementById('jid-carol').value = rid;
+
+      await sendCmd('bob', `JOIN_ROOM ${rid}`);
+      await sleep(150);
+      await sendCmd('carol', `JOIN_ROOM ${rid}`);
+      await sleep(150);
+
+      await sendCmd('alice', 'ADD_ITEM "Binh gom Bat Trang" "Gom co the ky 19" 500000 2000000');
+      await sleep(200);
+      await sendCmd('alice', 'ADD_ITEM "Tranh son dau" "Tam hoan" 300000 800000');
+      await sleep(200);
+      await sendCmd('alice', 'ADD_ITEM "Dong ho qua lac" "Phap co" 400000 1000000');
+      await sleep(200);
+
+      const firstId = state.alice.auctionItem ? Number(state.alice.auctionItem.id) : 1;
+      await sendCmd('alice', `REMOVE_ITEM ${firstId + 1}`);
+      await sleep(200);
+      await sendCmd('bob', 'LIST_ITEMS');
+      await sleep(200);
+
+      await sendCmd('bob', `BID ${firstId} 505000`); // 422
+      await sleep(200);
+      await sendCmd('bob', `BID ${firstId} 550000`); // 200
+      await sleep(250);
+      await sendCmd('carol', `BID ${firstId} 600000`); // 200
+    }
+
+    async function pollServerFiles() {
+      try {
+        const res = await fetch('/api/files');
+        const d = await res.json();
+        document.getElementById('tcpTargetBadge').textContent = `TCP ${d.tcp_target}`;
+        document.getElementById('box-accounts').textContent = d.accounts.trim() || '(trống)';
+        document.getElementById('box-rooms').textContent = d.rooms.trim() || '(trống)';
+        document.getElementById('box-items').textContent = d.items.trim() || '(trống)';
+        const logEl = document.getElementById('box-server-log');
+        logEl.textContent = d.log.trim() || '(trống)';
+        logEl.scrollTop = logEl.scrollHeight;
+      } catch (e) {}
+    }
+
+    /* Init UI & SSE Streams */
+    CLIENTS.forEach(c => {
+      buildClientColumn(c);
+      updateClientHeaderUI(c.id);
+      const es = new EventSource(`/api/events?client=${c.id}`);
+      es.onmessage = (msg) => {
+        try {
+          const ev = JSON.parse(msg.data);
+          handleServerEvent(c.id, ev);
+        } catch (e) {}
+      };
+    });
+    lucide.createIcons();
+    pollServerFiles();
+    setInterval(pollServerFiles, 1500);
+  </script>
+</body>
+</html>
